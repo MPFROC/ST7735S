@@ -4,13 +4,13 @@
 #include <inttypes.h>
 
 /* this may differ from the default 80x160 */
-#define defWIDTH   160
-#define defHEIGHT  80
-#define defXSTART  1
-#define defYSTART  26
+#define defWIDTH   128
+#define defHEIGHT  128
+#define defXSTART  3
+#define defYSTART  2
 
-/* #define BUFFER */
-/* #define BUFFER1 */
+//#define BUFFER
+//#define BUFFER1
 #define HVBUFFER
 
 #ifdef __cplusplus

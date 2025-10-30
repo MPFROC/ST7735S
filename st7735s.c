@@ -117,7 +117,7 @@ static uint8_t init_cmd[] = {
                 0x2e, 0x2e, 0x37, 0x3f, 0x00, 0x00, 0x02, 0x10,
     5,   CASET, 0, 0, 0, defHEIGHT-1,
     5,   RASET, 0, 0, 0, defWIDTH-1,
-    1,   INVON, /* display inversion on/off */
+//    1,   INVON, /* display inversion on/off */
     1,  IDMOFF, /* idle mode off */
     1,   NORON,  /* normal display mode on */
     1,  DISPON,  /* recover from display off, output from frame mem enabled */
@@ -125,11 +125,17 @@ static uint8_t init_cmd[] = {
 
 void initCommands(void) {
     uint8_t args;
-
     for(uint16_t i = 0; i < sizeof(init_cmd); i+=args+1) {
         args = init_cmd[i];
-
         SPI_Transmit(args, &init_cmd[i+1]);
+
+        // 检查刚发送的命令
+        uint8_t current_cmd = init_cmd[i+1];
+        if (current_cmd == SLPOUT || current_cmd == DISPOFF || current_cmd == DISPON || current_cmd == NORON) {
+            Delay(120); // 等待120ms
+        } else if (current_cmd == SWRESET) {
+            Delay(150); // 软件复位后等待150ms
+        }
     }
 }
 
@@ -198,7 +204,7 @@ void ST7735S_Init(void) {
     SPI_Init();
 
     /* backlight */
-    Pin_BLK_Pct(100);
+    Pin_BLK_Pct(20);
 
     /* hard reset */
     Pin_RES_High();
@@ -208,11 +214,10 @@ void ST7735S_Init(void) {
     Pin_RES_Low();
     Delay(2); /* 10µs min */
     Pin_RES_High();
-    Delay(2);
     Pin_CS_High();
+    Delay(120);
 
     initCommands();
-
 }
 
 void ST7735S_flush(void)

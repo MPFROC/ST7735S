@@ -25,6 +25,39 @@ void flushBuffer(void) {
     ST7735S_flush();
 }
 
+/**
+ * @brief 显示点阵位图函数
+ * @param bitmap 点阵数组指针
+ * @param width 点阵宽度（像素）
+ * @param height 点阵高度（像素）
+ * @param x0 起始X坐标
+ * @param y0 起始Y坐标
+ * @param bytes_per_line 每行字节数（自动计算或手动指定）
+ * @retval 无
+ */
+void displayBitmap(const unsigned char *bitmap, uint16_t width, uint16_t height,
+                   uint16_t x0, uint16_t y0, uint16_t bytes_per_line) {
+    // 如果未指定每行字节数，则根据宽度自动计算
+    if (bytes_per_line == 0) {
+        bytes_per_line = (width + 7) / 8; // 向上取整到整字节
+    }
+
+    // 遍历每个像素
+    for (uint16_t y = 0; y < height; y++) {
+        for (uint16_t x = 0; x < width; x++) {
+            // 计算当前像素在字节数组中的位置
+            uint16_t byte_index = y * bytes_per_line + x / 8;
+            uint8_t bit_index = 7 - (x % 8); // 高位在前，从左到右
+
+            // 检查该位是否被设置（为1表示点亮）
+            if (bitmap[byte_index] & (1 << bit_index)) {
+                setPixel(x0 + x, y0 + y);
+            }
+        }
+    }
+}
+
+
 /******************************************************************************
   Line+Circle // Bresenham's algorithm
  ******************************************************************************/
@@ -253,30 +286,14 @@ void drawRect(uint16_t x, uint16_t y, uint16_t x2, uint16_t y2) {
 }
 
 void filledRect(uint16_t x, uint16_t y, uint16_t x2, uint16_t y2) {
-
     if (x > x2) { uint16_t tmp = x; x = x2; x2 = tmp; }
     if (y > y2) { uint16_t tmp = y; y = y2; y2 = tmp; }
 
-    /* fast ergonomic grid fill */
-    if ( abs(x - x2) < abs(y - y2) ) {
-        uint16_t xl = x2 - ((abs(x - x2) & 1) ? 0 : 1);
-        while (x < x2)  {
-            drawLine( x, y, x, y2 );
-            drawLine( xl, y, xl, y2 );
-            x+=2;
-            xl-=2;
-        }
-    } else {
-        uint16_t yl = y2 - ((abs(y - y2) & 1) ? 0 : 1);
-        while (y < y2)  {
-            drawLine( x, y, x2, y );
-            drawLine( x, yl, x2, yl );
-            y+=2;
-            yl-=2;
-        }
+    /* 常规扫描逻辑 - 逐行填充 */
+    for (uint16_t currentY = y; currentY <= y2; currentY++) {
+        drawLine(x, currentY, x2, currentY);
     }
 }
-
 
 void fillScreen(void) {
     filledRect(0,0,WIDTH, HEIGHT);
@@ -389,11 +406,23 @@ void setbgColorC(color565_t c) {
 }
 
 void setColor(uint8_t r, uint8_t g, uint8_t b) {
-    setColorC((color565_t){ .r = r, .g = g, .b = b });
+    // 将8位颜色分量转换为RGB565格式
+    color565_t color;
+    color.r = r >> 3;  // 取高5位
+    color.g = g >> 2;  // 取高6位
+    color.b = b >> 3;  // 取高5位
+
+    setColorC(color);
 }
 
 void setbgColor(uint8_t r, uint8_t g, uint8_t b) {
-    setbgColorC((color565_t){ .r = r, .g = g, .b = b });
+    // 将8位颜色分量转换为RGB565格式
+    color565_t color;
+    color.r = r >> 3;  // 取高5位
+    color.g = g >> 2;  // 取高6位
+    color.b = b >> 3;  // 取高5位
+
+    setbgColorC(color);
 }
 
 struct s_color {
