@@ -424,21 +424,3 @@ void setbgColor(uint8_t r, uint8_t g, uint8_t b) {
 
     setbgColorC(color);
 }
-
-struct s_color {
-          uint8_t r:8;
-          uint8_t g:8;
-          uint8_t b:8;
-          uint8_t  :8;
-};
-
-void setColor24(uint32_t _color) {
-    struct s_color *c = (struct s_color *)&_color;
-    setColorC((color565_t){ .r = c->r*32/256, .g = c->g*64/256, .b = c->b*32/256 });
-}
-
-void setbgColor24(uint32_t _color) {
-    struct s_color *c = (struct s_color *)&_color;
-    setbgColorC((color565_t){ .r = c->r*32/256, .g = c->g*64/256, .b = c->b*32/256 });
-}
-
